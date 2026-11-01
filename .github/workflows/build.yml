@@ -12,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,15 +21,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.23.4
+          cache: npm
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Type and Astro checks
         run: npm run check
       - name: Build static site
         run: npm run build
+      - name: Validation regression tests
+        run: npm test
       - name: Privacy primitive review
-        run: |
-          if grep -RInE "fetch\\(|XMLHttpRequest|sendBeacon|WebSocket" src public; then
-            echo "Network primitive found. Review against AGENTS.md privacy boundary."
-            exit 1
-          fi
+        run: npm run audit:privacy
+      - name: Install test browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Browser regression tests
+        run: npm run test:browser
