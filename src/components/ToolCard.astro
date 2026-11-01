@@ -1,0 +1,15 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  type: 'image' | 'pdf';
+}
+const { title, description, href, type } = Astro.props;
+---
+<a class="tool-card" href={href}>
+  <span class="tool-eyebrow">{type === 'image' ? 'IMAGE' : 'PDF'}</span>
+  <h2>{title}</h2>
+  <p>{description}</p>
+  <span class="tool-link">Open tool <span aria-hidden="true">→</span></span>
+</a>

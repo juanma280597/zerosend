@@ -1,0 +1,6 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="About ZeroSend | Local browser file tools" description="Learn why ZeroSend processes supported file tasks directly in your browser instead of requiring an upload server.">
+  <section class="section"><div class="container narrow"><p class="eyebrow">ABOUT</p><h1>Useful file tools with a smaller privacy surface.</h1><p>ZeroSend is built around a simple architectural choice: when a task can run reliably in a modern browser, your selected file should not need a round trip through our application server.</p><h2>What “local” means here</h2><p>For supported tools, your browser reads the file and creates the result on your device. Normal website assets and future consent or advertising services can still make network requests, but the processing code must not pass selected-file data to them.</p><h2>Why this model</h2><p>Local processing can reduce unnecessary data exposure, eliminate upload waiting time for many tasks, and keep hosting costs low enough to offer useful free tools.</p><h2>Project status</h2><p>ZeroSend is an evolving project. Browser capabilities and file formats have real limitations, so each tool documents its supported inputs instead of pretending every file can be handled perfectly.</p></div></section>
+</BaseLayout>

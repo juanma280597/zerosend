@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PrivacyBadge from '../components/PrivacyBadge.astro';
+import ToolCard from '../components/ToolCard.astro';
+import JsonLd from '../components/JsonLd.astro';
+import { tools } from '../data/tools';
+---
+<BaseLayout title="ZeroSend — Private browser file tools" description="Free image and PDF tools that process supported files locally in your browser, without uploading them for processing.">
+  <JsonLd data={{
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'ZeroSend',
+    url: Astro.site?.toString() ?? 'https://zerosend.example',
+    description: 'Privacy-first browser tools for local image and PDF processing.'
+  }} />
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">PRIVATE BY ARCHITECTURE</p>
+        <h1>Process files.<br /><span>Send nothing.</span></h1>
+        <p class="hero-copy">Free image and PDF utilities that run supported processing directly in your browser. No account. No file-processing upload server.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#tools">Browse tools</a>
+          <a class="button secondary" href="/privacy">How privacy works</a>
+        </div>
+      </div>
+      <div class="hero-panel" aria-label="How ZeroSend processes a file">
+        <div class="flow-step"><span>1</span><div><strong>Choose</strong><small>A file from your device</small></div></div>
+        <div class="flow-line"></div>
+        <div class="flow-step"><span>2</span><div><strong>Process</strong><small>Inside your browser</small></div></div>
+        <div class="flow-line"></div>
+        <div class="flow-step"><span>3</span><div><strong>Download</strong><small>The locally generated result</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tools">
+    <div class="container">
+      <PrivacyBadge />
+      <div class="section-heading">
+        <p class="eyebrow">TOOLS</p>
+        <h2>Five useful tasks. Zero upload round-trips.</h2>
+        <p>Start with the essentials. Each tool is designed for fast mobile use and clear control over the result.</p>
+      </div>
+      <div class="tool-grid">
+        {tools.map((tool) => <ToolCard {...tool} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section muted">
+    <div class="container three-cols">
+      <article><p class="number">01</p><h2>Local processing</h2><p>Selected-file operations happen with browser APIs or client-side libraries instead of our application upload server.</p></article>
+      <article><p class="number">02</p><h2>No account</h2><p>Core tools do not require signup, a profile, or cloud storage.</p></article>
+      <article><p class="number">03</p><h2>Transparent limits</h2><p>We document what the browser can and cannot do rather than hiding limitations behind marketing claims.</p></article>
+    </div>
+  </section>
+</BaseLayout>

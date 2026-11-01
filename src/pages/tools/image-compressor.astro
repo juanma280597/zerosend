@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PrivacyBadge from '../../components/PrivacyBadge.astro';
+import JsonLd from '../../components/JsonLd.astro';
+---
+<BaseLayout title="Compress Image Locally — JPG, PNG & WebP | ZeroSend" description="Compress JPG, PNG, or WebP images directly in your browser. Adjust quality and download the result without uploading the selected image for processing.">
+  <JsonLd data={{ '@context':'https://schema.org','@type':'WebApplication', name:'ZeroSend Image Compressor', applicationCategory:'UtilitiesApplication', operatingSystem:'Any modern web browser', isAccessibleForFree:true }} />
+  <section class="tool-page"><div class="container narrow-wide">
+    <p class="eyebrow">IMAGE TOOL</p><h1>Image Compressor</h1><p class="lead">Reduce an image's file size locally. Compare the original and result before downloading.</p><PrivacyBadge />
+    <div class="tool-shell" data-image-compressor>
+      <label class="dropzone"><strong>Choose an image</strong><span>JPG, PNG or WebP</span><input type="file" accept="image/jpeg,image/png,image/webp" /></label>
+      <div class="controls hidden" data-controls>
+        <label>Output format<select data-format><option value="same">Same as input</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select></label>
+        <label>Quality <output data-quality-output>80%</output><input data-quality type="range" min="10" max="100" value="80" /></label>
+        <button class="button primary" data-process>Compress image</button>
+      </div>
+      <p class="status" data-status aria-live="polite"></p>
+      <div class="result hidden" data-result><img data-preview alt="Preview of compressed image" /><div class="stats"><div><span>Original</span><strong data-original-size></strong></div><div><span>Result</span><strong data-result-size></strong></div><div><span>Change</span><strong data-saving></strong></div></div><a class="button primary" data-download download>Download compressed image</a></div>
+    </div>
+    <article class="content-block"><h2>How to compress an image without uploading it</h2><ol><li>Select a JPG, PNG, or WebP file.</li><li>Choose an output format and quality.</li><li>Compress and inspect the result size.</li><li>Download the locally generated image.</li></ol><h2>What changes image size?</h2><p>Lossy JPG and WebP can trade visual detail for smaller files. PNG uses lossless compression, so the quality slider does not meaningfully reduce a PNG unless you convert it to a lossy format.</p><h2>Common uses</h2><p>Compress website photos, email attachments, presentation images, and social assets before sending or publishing them.</p><h2>FAQ</h2><h3>Is my image uploaded?</h3><p>No. The selected image is decoded and re-encoded in your browser for this tool.</p><h3>Will compression always make the file smaller?</h3><p>No. Already-optimized files, small images, or conversion to a less efficient setting can stay similar in size or grow.</p></article>
+  </div></section>
+</BaseLayout>
+
+<script>
+  import { loadImage, renderImage, canvasToBlob, formatBytes, fileExtensionForMime, safeBaseName } from '../../scripts/image-utils';
+  const root = document.querySelector<HTMLElement>('[data-image-compressor]');
+  if (root) {
+    const input = root.querySelector<HTMLInputElement>('input[type=file]')!;
+    const controls = root.querySelector<HTMLElement>('[data-controls]')!;
+    const format = root.querySelector<HTMLSelectElement>('[data-format]')!;
+    const quality = root.querySelector<HTMLInputElement>('[data-quality]')!;
+    const qualityOutput = root.querySelector<HTMLOutputElement>('[data-quality-output]')!;
+    const processButton = root.querySelector<HTMLButtonElement>('[data-process]')!;
+    const status = root.querySelector<HTMLElement>('[data-status]')!;
+    const result = root.querySelector<HTMLElement>('[data-result]')!;
+    const preview = root.querySelector<HTMLImageElement>('[data-preview]')!;
+    const originalSize = root.querySelector<HTMLElement>('[data-original-size]')!;
+    const resultSize = root.querySelector<HTMLElement>('[data-result-size]')!;
+    const saving = root.querySelector<HTMLElement>('[data-saving]')!;
+    const download = root.querySelector<HTMLAnchorElement>('[data-download]')!;
+    let outputUrl = '';
+    quality.addEventListener('input', () => { qualityOutput.value = `${quality.value}%`; });
+    input.addEventListener('change', () => { controls.classList.toggle('hidden', !input.files?.length); result.classList.add('hidden'); status.textContent = input.files?.[0] ? `${input.files[0].name} ready.` : ''; });
+    processButton.addEventListener('click', async () => {
+      const file = input.files?.[0]; if (!file) return;
+      processButton.disabled = true; status.textContent = 'Compressing locally…';
+      try {
+        const image = await loadImage(file); const canvas = renderImage(image, image.width, image.height); image.dispose();
+        const mime = format.value === 'same' ? file.type : format.value;
+        const blob = await canvasToBlob(canvas, mime, Number(quality.value) / 100);
+        if (outputUrl) URL.revokeObjectURL(outputUrl); outputUrl = URL.createObjectURL(blob); preview.src = outputUrl; download.href = outputUrl; download.download = `${safeBaseName(file.name)}-compressed.${fileExtensionForMime(blob.type)}`;
+        originalSize.textContent = formatBytes(file.size); resultSize.textContent = formatBytes(blob.size); const delta = ((file.size - blob.size) / file.size) * 100; saving.textContent = `${delta >= 0 ? '−' : '+'}${Math.abs(delta).toFixed(1)}%`;
+        result.classList.remove('hidden'); status.textContent = 'Done. The result was created in your browser.';
+      } catch (error) { console.error(error); status.textContent = 'This image could not be processed in your browser.'; }
+      finally { processButton.disabled = false; }
+    });
+  }
+</script>
