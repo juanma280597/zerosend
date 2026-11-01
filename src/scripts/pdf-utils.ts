@@ -15,8 +15,11 @@ export async function readPdf(file: File): Promise<PDFDocument> {
   }
   let bytes: ArrayBuffer;
   try {
-    const header = new Uint8Array(await file.slice(0, 5).arrayBuffer());
-    if (![37, 80, 68, 70, 45].every((byte, i) => header[i] === byte)) {
+    const header = new Uint8Array(await file.slice(0, 1024).arrayBuffer());
+    const signature = [37, 80, 68, 70, 45]; // ASCII %PDF-
+    const hasSignature = header.some((_, offset) =>
+      signature.every((byte, index) => header[offset + index] === byte));
+    if (!hasSignature) {
       throw new FileProblem('This is not a valid PDF file. Choose an original PDF.');
     }
     bytes = await file.arrayBuffer();

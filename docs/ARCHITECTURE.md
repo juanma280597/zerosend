@@ -35,7 +35,9 @@ JPG output uses a white background for transparent pixels.
 
 ### PDF
 
-PDF tools load local `ArrayBuffer` values into bundled `pdf-lib`. Merge reads sources sequentially and
+PDF tools check for the complete ASCII `%PDF-` signature within the first 1024 local bytes, allowing
+leading bytes without removing size, MIME, corruption or encryption checks.
+They load local `ArrayBuffer` values into bundled `pdf-lib`. Merge reads sources sequentially and
 copies pages into a new in-memory PDF. Split retains one parsed document and copies selected pages
 into a new PDF; it does not keep a second cached source buffer. Empty, encrypted and damaged PDFs
 produce controlled errors. Descending ranges and repeated pages are preserved; malformed and empty

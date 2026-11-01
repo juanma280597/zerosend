@@ -51,6 +51,42 @@ test('PDF Blob output is readable and retains pages', async () => {
   assert.equal(read.getPageCount(), 1);
   assert.equal(read.getPage(0).getWidth(), 123);
 });
+
+async function prefixedPdf(prefixLength) {
+  const pdf = await PDFDocument.create();
+  pdf.addPage([123, 456]);
+  return new File([new Uint8Array(prefixLength), await pdfBlob(pdf)], 'signature-test.pdf', { type: 'application/pdf' });
+}
+
+test('PDF signature at byte zero is accepted', async () => {
+  const pdf = await readPdf(await prefixedPdf(0));
+  assert.equal(pdf.getPageCount(), 1);
+  assert.equal(pdf.getPage(0).getWidth(), 123);
+});
+
+test('PDF signature after leading bytes is accepted when fully inside the first 1024 bytes', async () => {
+  for (const prefixLength of [3, 1019]) {
+    const pdf = await readPdf(await prefixedPdf(prefixLength));
+    assert.equal(pdf.getPageCount(), 1);
+    assert.equal(pdf.getPage(0).getWidth(), 123);
+  }
+});
+
+test('PDF signature validation reads only the first 1024 bytes and rejects absent or crossing signatures', async () => {
+  for (const file of [new File([new Uint8Array(2048)], 'no-signature.pdf'), await prefixedPdf(1020), await prefixedPdf(1024)]) {
+    const boundedFile = {
+      size: file.size,
+      type: file.type,
+      slice(start, end) {
+        assert.equal(start, 0);
+        assert.equal(end, 1024);
+        return file.slice(start, end);
+      },
+      arrayBuffer() { assert.fail('Signature rejection must happen before reading the full file.'); },
+    };
+    await assert.rejects(readPdf(boundedFile), /not a valid PDF file/);
+  }
+});
 test('download names are bounded and sanitized', () => {
   assert.equal(safeBaseName('../private report.png'), 'private-report');
   assert.equal(safeBaseName('😺.png'), 'zerosend-file');
