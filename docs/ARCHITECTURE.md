@@ -27,11 +27,44 @@ There is intentionally no application upload server in v0.1.
 
 ### Images
 
-Image tools use browser decoding and Canvas APIs. Input is read into an object URL and decoded locally. Output is generated with `canvas.toBlob()`.
+Image tools check local file signatures and use browser decoding and Canvas APIs. ImageBitmap is
+preferred, with a local object-URL Image fallback for mobile decoders. Output is generated with
+`canvas.toBlob()`; the actual output MIME must match the requested format. Bitmap handles, fallback
+URLs and canvases are released even on errors. PNG quality is disabled because the encoder is lossless.
+JPG output uses a white background for transparent pixels.
 
 ### PDF
 
-PDF tools load local `ArrayBuffer` values into `pdf-lib`. Merge copies pages into a new in-memory PDF. Split/extract copies selected pages into a new PDF.
+PDF tools check for the complete ASCII `%PDF-` signature within the first 1024 local bytes, allowing
+leading bytes without removing size, MIME, corruption or encryption checks.
+They load local `ArrayBuffer` values into bundled `pdf-lib`. Merge reads sources sequentially and
+copies pages into a new in-memory PDF. Split retains one parsed document and copies selected pages
+into a new PDF; it does not keep a second cached source buffer. Empty, encrypted and damaged PDFs
+produce controlled errors. Descending ranges and repeated pages are preserved; malformed and empty
+comma entries are rejected before copying pages.
+
+### Shared lifecycle
+
+The three image pages use `image-tool.ts`; the two PDF pages use `pdf-tool.ts`. `tool-ui.ts` owns
+result Blob URLs and invalidates downloads whenever input or settings change. Controls are disabled
+while asynchronous work runs so results cannot be attributed to a newer file or selection order.
+No file state is stored in a global, localStorage, a worker service, or an application database.
+
+### Resource limits
+
+- Images: 25 MiB input, 8192 pixels per side, 16 million pixels total (input and output).
+- PDFs: 50 MiB per input, 100 MiB combined merge input, 2000 output pages including repetitions.
+
+These are safeguards for local memory, not paid-tier restrictions. Devices can require smaller files.
+Image dimensions are checked after browser decoding; maliciously compressed images can still put
+pressure on the decoder. PDF page counts are checked after parsing, so large/complex objects can
+consume memory before output-page limits apply. No server fallback exists.
+
+### Static hosting
+
+Cloudflare Pages serves `dist`, including `_headers`. Hashed Astro assets are cached under `/_astro/*`.
+The CSP blocks runtime connections and external scripts. CSS is emitted as a self-hosted stylesheet
+to comply with the policy. The scripts under `scripts/` and tests are development tooling only.
 
 ## Third-party boundary
 

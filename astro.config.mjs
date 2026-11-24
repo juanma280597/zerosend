@@ -5,4 +5,5 @@ export default defineConfig({
   site: process.env.PUBLIC_SITE_URL || 'https://zerosend.example',
   trailingSlash: 'never',
   compressHTML: true,
+  build: { inlineStylesheets: 'never' },
 });
